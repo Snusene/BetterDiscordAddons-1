@@ -15,13 +15,18 @@
   "devDependencies": {
     "@digitak/esrun": "^3.2.26",
     "@eslint/js": "^9.17.0",
+    "@tsconfig/svelte": "^5.0.4",
     "@types/eslint": "^9.6.1",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.1",
     "@types/react-reconciler": "^0.28.9",
     "esbuild": "^0.24.0",
+    "esbuild-svelte": "^0.9.0",
     "eslint": "^9.17.0",
     "globals": "^15.13.0",
+    "svelte": "^5.14.4",
+    "svelte-check": "^4.1.1",
+    "svelte-preprocess": "^6.0.3",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"
   }

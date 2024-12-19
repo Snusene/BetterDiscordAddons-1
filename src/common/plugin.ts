@@ -1,6 +1,6 @@
-import {ReactElement} from "react";
-import {Changelog, Manifest} from "@betterdiscord/manifest";
-import {Meta} from "@betterdiscord/meta";
+import type {ReactElement} from "react";
+import type {Changelog, Manifest} from "@betterdiscord/manifest";
+import type {Meta} from "@betterdiscord/meta";
 
 
 interface Settings {
@@ -84,6 +84,8 @@ export default class Plugin {
     stop() {
         BdApi.Logger.info(this.meta.name, `version ${this.meta.version} has stopped.`);
         if (typeof(this.onStop) == "function") this.onStop();
+        const svelteStyles = document.querySelectorAll(`style[id*="${this.meta.name}"]`);
+        for (const style of svelteStyles) style.remove();
     }
 
     #showChangelog() {

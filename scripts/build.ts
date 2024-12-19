@@ -3,9 +3,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import * as esbuild from "esbuild";
-import install from "./install";
+import esbuild from "esbuild";
+import esbuildSvelte from "esbuild-svelte";
+import {sveltePreprocess} from "svelte-preprocess";
 
+import install from "./install";
 import buildMeta from "./meta";
 
 
@@ -99,7 +101,16 @@ async function buildPlugin() {
         logLevel: "info",
         metafile: true,
         minify: false,
-        plugins: [copyToBDPlugin],
+        plugins: [
+            copyToBDPlugin,
+            esbuildSvelte({
+                preprocess: sveltePreprocess(),
+                compilerOptions: {
+                    css: "injected",
+                    cssHash: ({hash, css}) => `${pluginName}-${hash(css)}`
+                }
+            })
+        ],
         treeShaking: true,
     });
 

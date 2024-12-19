@@ -1,12 +1,12 @@
-import {Component, ReactElement} from "react";
+import type {Component, ReactElement} from "react";
 
 import Plugin from "@common/plugin";
 import formatString from "@common/formatstring";
 
-import {Meta} from "@betterdiscord/meta";
+import type {Meta} from "@betterdiscord/meta";
 
-import {Channel, Guild, GuildMember, GuildRole, PermissionOverwrite, User} from "@discord";
-import {ClassModule, DiscordPermissions as IDiscordPermissions} from "@discord/modules";
+import type {Channel, Guild, GuildMember, GuildRole, PermissionOverwrite, User} from "@discord";
+import type {ClassModule, DiscordPermissions as IDiscordPermissions} from "@discord/modules";
 
 import Config from "./config";
 
@@ -23,6 +23,9 @@ import ModalButtonUserHTML from "./modalbuttonuser.html";
 import PermAllowedSVG from "./permallowed.svg";
 import PermDeniedSVG from "./permdenied.svg";
 import {rgbToAlpha} from "@common/colors";
+
+import Hello from "./Hello.svelte";
+import {mount} from "svelte";
 
 
 type DisplayMode = "cozy" | "compact";
@@ -101,9 +104,9 @@ const PermissionStringMap: Record<keyof IDiscordPermissions, string> = {
 export default class PermissionsViewer extends Plugin {
     constructor(meta: Meta) {super(meta, Config);}
 
-    sectionHTML: string;
-    itemHTML: string;
-    modalHTML: string;
+    sectionHTML: string = "";
+    itemHTML: string = "";
+    modalHTML: string = "";
     contextMenuPatches: (() => void)[] = [];
 
     onStart() {
@@ -279,6 +282,9 @@ export default class PermissionsViewer extends Plugin {
             modal.classList.add("closing");
             setTimeout(() => {modal.remove();}, 300);
         };
+        const temp = DOM.createElement("div");
+        modal.append(temp);
+        mount(Hello, {target: modal});
         document.addEventListener("keydown", closeModal, true);
         DOM.onRemoved(modal, () => document.removeEventListener("keydown", closeModal, true));
     }

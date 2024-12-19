@@ -9,6 +9,7 @@
         "target": "ESNext",
         "moduleResolution": "bundler",
         "rootDir": ".",
+        "verbatimModuleSyntax": true,
         // "typeRoots": ["node_modules/@types", "src/types/global.d.ts"],
         "paths": {
             "@betterdiscord": ["./src/types/betterdiscord"],
@@ -16,7 +17,7 @@
             "@discord": ["./src/types/discord"],
             "@discord/*": ["./src/types/discord/*"],
             "@common/*": ["./src/common/*"]
-        }
+        },
     },
     "include": ["src/*", "src/**/*"]
 }
