@@ -7,9 +7,9 @@
  * @website https://github.com/rauenzi/BetterDiscordAddons/tree/master/Plugins/BetterFormattingRedux
  * @source https://raw.githubusercontent.com/rauenzi/BetterDiscordAddons/master/Plugins/BetterFormattingRedux/BetterFormattingRedux.plugin.js
  */
-/*@cc_on
+/* @cc_on
 @if (@_jscript)
-    
+
     // Offer to self-install for clueless users that try to run this directly.
     var shell = WScript.CreateObject("WScript.Shell");
     var fs = new ActiveXObject("Scripting.FileSystemObject");
@@ -32,7 +32,7 @@
 @else@*/
 const config = {
     info: {
-        name: "BetterFormattingRedux",
+        name: "BetterFormattingRedux2",
         authors: [
             {
                 name: "Zerebos",
@@ -418,7 +418,7 @@ class Dummy {
     start() {}
     stop() {}
 }
- 
+
 if (!global.ZeresPluginLibrary) {
     BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.name ?? config.info.name} is missing. Please click Download Now to install it.`, {
         confirmText: "Download Now",
@@ -439,7 +439,7 @@ if (!global.ZeresPluginLibrary) {
         }
     });
 }
- 
+
 module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
      const plugin = (Plugin, Api) => {
     const {ContextMenu, DOM, Patcher, UI} = window.BdApi;
@@ -465,7 +465,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             this.buttonOrder = Object.keys(this.defaultSettings.toolbar);
 
 
-            this.toolbarData = (() => {return {
+            this.toolbarData = (() => {
+return {
     bold: {type: "native-format",
             name: "Bold",
             displayName: "<b>Bold</b>",
@@ -523,8 +524,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             displayName: "乇乂下尺卂 下卄工匚匚",
             icon: `<img src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMjRweCIgaGVpZ2h0PSIyNHB4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIGRpc3BsYXk9Im5vbmUiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xNS42LDEwLjc5YzAuOTcxLTAuNjcsMS42NS0xLjc3LDEuNjUtMi43OWMwLTIuMjYtMS43NS00LTQtNEg3djE0aDcuMDQNCgljMi4wOSwwLDMuNzEtMS43LDMuNzEtMy43OUMxNy43NSwxMi42ODksMTYuODkxLDExLjM5LDE1LjYsMTAuNzl6IE0xMCw2LjVoM2MwLjgzLDAsMS41LDAuNjcsMS41LDEuNVMxMy44Myw5LjUsMTMsOS41aC0zVjYuNXoNCgkgTTEzLjUsMTUuNUgxMHYtM2gzLjVjMC44MywwLDEuNSwwLjY3LDEuNSwxLjVTMTQuMzMsMTUuNSwxMy41LDE1LjV6Ii8+DQo8cGF0aCBmaWxsPSJub25lIiBkPSJNMCwwaDI0djI0SDBWMHoiLz4NCjx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIDEgNS45MzU1IDE0Ljk5NzEpIiBmaWxsPSIjRkZGRkZGIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgZm9udC1mYW1pbHk9IidLb3pHb1ByNk4tUmVndWxhci04M3B2LVJLU0otSCciIGZvbnQtc2l6ZT0iMTIuNTY0Ij7kuYc8L3RleHQ+DQo8L3N2Zz4NCg=='>`
             }
-};})();
-            this.allLanguages = (() => {return {
+};
+})();
+            this.allLanguages = (() => {
+return {
     C: {cpp: "C++", csharp: "C#", coffeescript: "CoffeeScript", css: "CSS"},
     H: {html: "HTML/XML"},
     J: {java: "Java", js: "JavaScript", json: "JSON"},
@@ -533,7 +536,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
     R: {ruby: "Ruby"},
     S: {sql: "SQL"},
     V: {vbnet: "VB.NET", vhdl: "VHDL"}
-};})();
+};
+})();
             this.mainCSS = `.bf-toolbar {
 	user-select: none;
 	white-space: nowrap;
@@ -1082,4 +1086,4 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 };
      return plugin(Plugin, Api);
 })(global.ZeresPluginLibrary.buildPlugin(config));
-/*@end@*/
+/* @end@*/
