@@ -8,7 +8,7 @@ import Config from "./config";
 import type {GuildRole, User} from "@discord";
 
 import UserSearchPopout from "./UserSearchPopout.svelte";
-import {mount} from "svelte";
+import {mount, unmount} from "svelte";
 import type {ImageResolver, UserModalOpener} from "@discord/modules";
 
 
@@ -41,9 +41,21 @@ function openUserPopout(event: MouseEvent, userId: string, guildId: string) {
         return;
     }
 
+    const currentUser = UserStore.getCurrentUser();
+    if (!currentUser) {
+        UI.showToast("Could not get current user data.", {type: "error"});
+        return;
+    }
+
+    const targetUser = UserStore.getUser(userId);
+    if (!targetUser) {
+        UI.showToast("Could not get target user data.", {type: "error"});
+        return;
+    }
+
     const rendered = BdApi.React.createElement(UserProfileWrapperComponent, {
-        currentUser: BdApi.Webpack.Stores.UserStore.getCurrentUser()!,
-        user: BdApi.Webpack.Stores.UserStore.getUser(userId)!,
+        currentUser: currentUser,
+        user: targetUser,
         guildId: guildId
     });
 
@@ -66,6 +78,7 @@ export default class RoleMembers extends Plugin {
 
     contextMenuPatch?(): void;
     listener?(e: MouseEvent | null): void;
+    popoutInstance?: ReturnType<typeof mount>;
 
     onStart() {
         this.patchRoleMention(); // <@&367344340231782410>
@@ -89,10 +102,10 @@ export default class RoleMembers extends Plugin {
             props.onClick = (e: ReactMouseEvent<HTMLElement>) => {
                 const roles = getRoles({id: SelectedGuildStore!.getGuildId()!});
                 const name = props.children[1][0].props.children.slice(1) as string;
-                const filtered = filter(roles!, (r: GuildRole) => r.name == name) as Record<string, GuildRole>;
+                const filtered = filter(roles!, (r: GuildRole) => r.name === name) as Record<string, GuildRole>;
                 if (!filtered) return;
                 const role = filtered[Object.keys(filtered)[0]];
-                this.showSveltePopout(e.nativeEvent, SelectedGuildStore!.getGuildId()!, role.id, e.currentTarget.getBoundingClientRect());
+                this.showSveltePopout(SelectedGuildStore!.getGuildId()!, role.id, e.currentTarget.getBoundingClientRect());
             };
         });
     }
@@ -115,10 +128,7 @@ export default class RoleMembers extends Plugin {
                 const item = ContextMenu.buildItem({
                     id: roleId,
                     label: () => BdApi.React.createElement("span", {style: {color: role.colorStrings?.primaryColor ? role.colorStrings.primaryColor : ""}}, label),
-                    // dontCloseOnAction: true,
                     action: (e: ReactMouseEvent<HTMLElement>) => {
-                        e.currentTarget = e.target as HTMLElement; // Fixes incorrect target typing
-
                         if (e.ctrlKey) {
                             try {
                                 DiscordNative.clipboard.copy(role.id);
@@ -129,7 +139,7 @@ export default class RoleMembers extends Plugin {
                             }
                         }
                         else {
-                            this.showSveltePopout(e.nativeEvent, guildId, role.id, {top: e.pageY, bottom: e.pageY, left: e.pageX, right: e.pageX});
+                            this.showSveltePopout(guildId, role.id, {top: e.pageY, bottom: e.pageY, left: e.pageX, right: e.pageX});
                         }
                     }
                 });
@@ -141,38 +151,34 @@ export default class RoleMembers extends Plugin {
             const separatorIndex = retVal.props?.children?.findIndex(k => !k?.props?.label);
             const insertIndex = separatorIndex && separatorIndex > 0 ? separatorIndex + 1 : 1;
             retVal.props?.children?.splice(insertIndex, 0, newOne);
-            // return original;
-
         });
     }
 
-    showSveltePopout(event: MouseEvent, guildId: string, roleId: string, offset: OffsetRect) {
+    showSveltePopout(guildId: string, roleId: string, offset: OffsetRect) {
         const roles = getRoles({id: guildId});
         if (!roles) return;
         const role = roles[roleId];
-        let members = GuildMemberStore!.getMembers(guildId);
-        if (guildId != roleId) members = members.filter(m => m.roles.includes(role.id));
+        let members = GuildMemberStore.getMembers(guildId);
+        if (guildId !== roleId) members = members.filter(m => m.roles.includes(role.id));
 
         const svelteMountContainer = document.createElement("div");
         svelteMountContainer.style.position = "fixed";
         svelteMountContainer.style.pointerEvents = "all";
-        mount(UserSearchPopout, {
+        this.popoutInstance = mount(UserSearchPopout, {
             target: svelteMountContainer,
             props: {
                 onItemClick: (ev, user) => openUserPopout(ev, user.id, guildId),
                 users: members.map(m => {
-                    const user = UserStore.getUser(m.userId)!;
+                    const user = UserStore.getUser(m.userId);
                     return {
                         id: m.userId,
-                        avatar: Images!.getUserAvatarURL(user),
-                        name: user.username,
+                        avatar: Images && user ? Images.getUserAvatarURL(user) : "",
+                        name: user?.username ?? "Unknown User",
                         color: m.colorStrings?.primaryColor ? m.colorStrings.primaryColor : undefined
                     };
                 })
             }
         });
-
-        // BdApi.ContextMenu.open(event, () => BdApi.React.createElement(BdApi.ReactUtils.wrapElement(svelteMountContainer)), {noBlurEvent: true});
 
         this.showPopout(svelteMountContainer, offset);
     }
@@ -183,7 +189,6 @@ export default class RoleMembers extends Plugin {
         const layerContainers = document.querySelectorAll(`[class*="-app"] ~ .${LayerClasses?.layerContainer ?? "_59d0d7075b521375-layerContainer"}`);
         const firstLayerContainer = layerContainers[0];
         if (!firstLayerContainer) return;
-        // const lastLayerContainer = layerContainers[layerContainers.length - 1];
         firstLayerContainer.appendChild(popout);
 
         const maxWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -220,6 +225,8 @@ export default class RoleMembers extends Plugin {
             if (target?.classList.value.includes("trapClicks")) return; // User popout is open
             if (!target || (!target?.classList?.contains("popout-role-members") && !target?.closest(".popout-role-members"))) {
                 popout.remove();
+                if (this.popoutInstance) unmount(this.popoutInstance);
+                delete this.popoutInstance;
                 document.removeEventListener("click", this.listener!);
                 delete this.listener;
             }

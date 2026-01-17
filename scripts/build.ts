@@ -20,8 +20,9 @@ const mac = process.env.HOME + "/Library/Application Support";
 const linux = process.env.XDG_CONFIG_HOME ? process.env.XDG_CONFIG_HOME : process.env.HOME + "/.config";
 let bdFolder = (process.platform == "win32" ? windows : process.platform == "darwin" ? mac : linux) + "/BetterDiscord/";
 
+// WSL detected, generate proper windows path for wsl
 if (process.env.WSL_DISTRO_NAME) {
-    // WSL detected, generate proper windows path for wsl
+    // We could try..catch here but if this fails we want the build to fail anyway
     const appdata = (await $`wslpath "$(cmd.exe /c "echo %APPDATA%" 2>/dev/null | tr -d '\r')"`.text()).trim();
     bdFolder = path.join(appdata, "BetterDiscord") + "/";
 }

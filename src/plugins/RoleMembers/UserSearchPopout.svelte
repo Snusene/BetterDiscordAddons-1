@@ -84,7 +84,6 @@
 .header {
 	display: flex;
 	flex-grow: 1;
-	/* padding: calc(var(--space-xxs) - 1px) var(--space-4) calc(var(--space-xxs) - 1px) var(--space-8); */
 	padding: 4px;
 }
 
@@ -186,35 +185,6 @@
     height: 8px;
     width: 8px;
 }
-
-/* .user-list::-webkit-scrollbar {
-    width: 16px;
-    height: 16px;
-}
-
-.user-list::-webkit-scrollbar-corner {
-    background: transparent;
-}
-
-.user-list::-webkit-scrollbar-thumb {
-    background: transparent;
-    min-height: 40px;
-}
-
-.user-list:hover::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.user-list::-webkit-scrollbar-thumb,
-.user-list::-webkit-scrollbar-track {
-    background-clip: padding-box;
-    border: 4px solid transparent;
-    border-radius: 8px;
-}
-
-.user-list::-webkit-scrollbar-track {
-    margin-bottom: 36px;
-} */
 </style>
 
 
