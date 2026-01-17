@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {FluxStore} from "@discord/modules";
+import type {Stores} from "@discord/stores";
 
 export interface Module {
     id: number;
@@ -27,6 +28,8 @@ export interface Webpack {
     getByPrototypeKeys<T>(...keys: string[] | [...string[], FilterOptions]): T | undefined;
     getStore<T>(name: string): T & FluxStore | undefined;
     getWithKey<T = any>(filter: FilterFunction, options?: WithKeyOptions): [T, string];
+    getById<T>(id: number): T | undefined;
+    Stores: Stores;
 }
 
 export interface Filters {
