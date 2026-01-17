@@ -113,7 +113,8 @@ export default class RoleMembers extends Plugin {
             if (props.className.toLowerCase().includes("interactive")) return; // Already patched
             props.className += ` interactive`;
             props.onClick = (e: ReactMouseEvent<HTMLElement>) => {
-                e.stopPropagation();
+                // e.preventDefault();
+                // e.stopPropagation();
                 const roles = getRoles({id: SelectedGuildStore.getGuildId()!});
                 const name = props.children[1][0].props.children.slice(1) as string;
                 const filtered = filter(roles!, (r: GuildRole) => r.name === name) as Record<string, GuildRole>;
@@ -143,7 +144,7 @@ export default class RoleMembers extends Plugin {
                 }
                 const item = ContextMenu.buildItem({
                     id: roleId,
-                    label: () => BdApi.React.createElement("span", {style: {color: role.colorStrings?.primaryColor ? role.colorStrings.primaryColor : ""}}, label),
+                    label: () => BdApi.React.createElement("span", {style: {color: role?.colorStrings?.primaryColor || ""}}, label),
                     action: (e: ReactMouseEvent<HTMLElement>) => {
                         if (e.ctrlKey) {
                             try {
@@ -175,6 +176,8 @@ export default class RoleMembers extends Plugin {
         const roles = getRoles({id: guildId});
         if (!roles) return;
         const role = roles[roleId];
+        if (!role) return;
+
         let members = GuildMemberStore.getMembers(guildId);
         if (guildId !== roleId) members = members.filter(m => m.roles.includes(role.id));
 
@@ -205,7 +208,7 @@ export default class RoleMembers extends Plugin {
 
         const layerContainers = document.querySelectorAll(`[class*="-app"] ~ .${LayerClasses?.layerContainer ?? "_59d0d7075b521375-layerContainer"}`);
         const firstLayerContainer = layerContainers[0];
-        if (!firstLayerContainer) return;
+        if (!firstLayerContainer) return UI.showToast("Could not find layer container to mount role members popout.", {type: "error"});
         firstLayerContainer.appendChild(popout);
 
         const maxWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -238,6 +241,13 @@ export default class RoleMembers extends Plugin {
                 delete this.listener;
             }
         };
-        document.addEventListener("click", this.listener!);
+
+        const currentListener = this.listener;
+
+        // Ensure this is added after any current clicks
+        setTimeout(() => {
+            if (this.listener !== currentListener) return;
+            document.addEventListener("click", this.listener!);
+        }, 1);
     }
 };

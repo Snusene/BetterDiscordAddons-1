@@ -21,6 +21,7 @@
 
     function onKeydown(event: KeyboardEvent, user: User) {
         if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
             onItemClick?.(event as unknown as MouseEvent, user);
         }
     }
@@ -29,7 +30,7 @@
 <div class="popout popout-role-members">
 
 	<div class="header">
-		<input type="search" placeholder="Search {users.length} users..." bind:value={query} />
+		<input type="search" placeholder="Search {users.length} members..." bind:value={query} />
 	</div>
 
 
@@ -103,6 +104,10 @@
 	min-height: calc(var(--select-option-height) - 2px);
 	min-width: min(12ch, 80%);
 	padding-inline: var(--space-12) var(--space-8);
+}
+
+.header input:hover {
+    border-color: var(--custom-input-hover-border-color);
 }
 
 .header input:focus {
