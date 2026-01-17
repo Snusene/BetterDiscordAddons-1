@@ -1,3 +1,4 @@
+import type {Guild, User} from "./index";
 import {ForwardRefExoticComponent, MemoExoticComponent, JSX} from "react";
 
 export type ClassModule = Record<string, string>;
@@ -80,4 +81,14 @@ export interface DiscordPermissions {
     VIEW_CHANNEL: 1024n;
     VIEW_CREATOR_MONETIZATION_ANALYTICS: 2199023255552n;
     VIEW_GUILD_ANALYTICS: 524288n;
+}
+
+export interface ImageResolver {
+    getUserAvatarURL(user: User): string;
+    getGuildIconURL(guild: Guild): string;
+}
+
+export interface UserModalOpener {
+    openUserProfileModal(options: {userId: string; guildId?: string;}): void;
+    closeUserProfileModal(): void;
 }
