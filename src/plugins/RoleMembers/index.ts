@@ -208,7 +208,14 @@ export default class RoleMembers extends Plugin {
 
         const layerContainers = document.querySelectorAll(`[class*="-app"] ~ .${LayerClasses?.layerContainer ?? "_59d0d7075b521375-layerContainer"}`);
         const firstLayerContainer = layerContainers[0];
-        if (!firstLayerContainer) return UI.showToast("Could not find layer container to mount role members popout.", {type: "error"});
+        if (!firstLayerContainer) {
+            if (this.popoutInstance) {
+                unmount(this.popoutInstance);
+                delete this.popoutInstance;
+            }
+            popout?.remove();
+            return UI.showToast("Could not find layer container to mount role members popout.", {type: "error"});
+        }
         firstLayerContainer.appendChild(popout);
 
         const maxWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
