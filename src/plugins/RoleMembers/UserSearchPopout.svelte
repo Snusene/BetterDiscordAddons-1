@@ -1,6 +1,4 @@
 <script lang="ts">
-	import {slide} from "svelte/transition";
-
     interface User {
         id: string;
         name: string;
@@ -37,11 +35,8 @@
 
 <div class="user-list">
 	{#each results as user (user.id)}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
             class="user"
-            transition:slide={{duration: 150}}
             onclick={(event) => onItemClick?.(event, user)}
             onkeydown={(event) => onKeydown(event, user)}
             role="button"

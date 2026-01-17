@@ -113,6 +113,7 @@ export default class RoleMembers extends Plugin {
             if (props.className.toLowerCase().includes("interactive")) return; // Already patched
             props.className += ` interactive`;
             props.onClick = (e: ReactMouseEvent<HTMLElement>) => {
+                e.stopPropagation();
                 const roles = getRoles({id: SelectedGuildStore.getGuildId()!});
                 const name = props.children[1][0].props.children.slice(1) as string;
                 const filtered = filter(roles!, (r: GuildRole) => r.name === name) as Record<string, GuildRole>;
@@ -137,7 +138,7 @@ export default class RoleMembers extends Plugin {
                 let label = role.name;
                 if (this.settings.showCounts) {
                     let membersInRole = members;
-                    if (guildId != roleId) membersInRole = membersInRole.filter(m => m.roles.includes(role.id));
+                    if (guildId !== roleId) membersInRole = membersInRole.filter(m => m.roles.includes(role.id));
                     label = `${label} (${membersInRole.length})`;
                 }
                 const item = ContextMenu.buildItem({
@@ -170,6 +171,7 @@ export default class RoleMembers extends Plugin {
     }
 
     showSveltePopout(guildId: string, roleId: string, offset: OffsetRect) {
+        if (this.popoutInstance) return; // Only one popout at a time
         const roles = getRoles({id: guildId});
         if (!roles) return;
         const role = roles[roleId];
@@ -236,6 +238,6 @@ export default class RoleMembers extends Plugin {
                 delete this.listener;
             }
         };
-        setTimeout(() => document.addEventListener("click", this.listener!), 500);
+        document.addEventListener("click", this.listener!);
     }
 };
