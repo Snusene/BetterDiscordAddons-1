@@ -27,4 +27,5 @@ export interface ContextMenu {
     buildItem(props: ContextMenuItemProps): ReactElement;
     buildMenu(setup: ContextMenuSetup): FunctionComponent;
     open(event: MouseEvent, menuComponent: ComponentType<unknown>, config?: ContextMenuConfig): void;
+    close(): void;
 }

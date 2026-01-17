@@ -3,10 +3,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import * as esbuild from "esbuild";
-import install from "./install";
+import esbuild from "esbuild";
+import esbuildSvelte from "esbuild-svelte";
+import {sveltePreprocess} from "svelte-preprocess";
 
+import install from "./install";
 import buildMeta from "./meta";
+import {$} from "bun";
 
 
 const pluginName = process.argv.slice(2)[0];
@@ -15,7 +18,13 @@ const pluginName = process.argv.slice(2)[0];
 const windows = process.env.APPDATA;
 const mac = process.env.HOME + "/Library/Application Support";
 const linux = process.env.XDG_CONFIG_HOME ? process.env.XDG_CONFIG_HOME : process.env.HOME + "/.config";
-const bdFolder = (process.platform == "win32" ? windows : process.platform == "darwin" ? mac : linux) + "/BetterDiscord/";
+let bdFolder = (process.platform == "win32" ? windows : process.platform == "darwin" ? mac : linux) + "/BetterDiscord/";
+
+if (process.env.WSL_DISTRO_NAME) {
+    // WSL detected, generate props windows path for wsl
+    const appdata = (await $`wslpath "$(cmd.exe /c "echo %APPDATA%" 2>/dev/null | tr -d '\r')"`.text()).trim();
+    bdFolder = path.join(appdata, "BetterDiscord") + "/";
+}
 
 // Setup input and output bases
 const projectRoot = path.dirname(process.env.npm_package_json ?? "..");
@@ -45,7 +54,7 @@ const copyToBDPlugin: esbuild.Plugin = {
             const output = fs.readFileSync(releaseFile).toString();
             const newFileContent = banner + output + "\n/*@end@*/";
             fs.writeFileSync(releaseFile, newFileContent);
-            
+
             fs.writeFileSync(path.join(bdFolder, "plugins", `${pluginName}.plugin.js`), fs.readFileSync(releaseFile));
         });
 
@@ -99,7 +108,16 @@ async function buildPlugin() {
         logLevel: "info",
         metafile: true,
         minify: false,
-        plugins: [copyToBDPlugin],
+        plugins: [
+            copyToBDPlugin,
+            esbuildSvelte({
+                preprocess: sveltePreprocess(),
+                compilerOptions: {
+                    css: "injected",
+                    cssHash: ({hash, css}) => `${pluginName}-${hash(css)}`
+                }
+            })
+        ],
         treeShaking: true,
     });
 
