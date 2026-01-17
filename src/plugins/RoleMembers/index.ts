@@ -37,7 +37,11 @@ const UserProfileWrapperComponent = BdApi.Webpack.getByStrings<FunctionComponent
 function openUserPopout(event: MouseEvent, userId: string, guildId: string) {
     if (!UserProfileWrapperComponent) {
         UI.showToast("User popouts are currently not supported in this version of Discord.", {type: "error"});
-        UserModals!.openUserProfileModal({userId});
+        if (!UserModals) {
+            UI.showToast("Could not find user modal module.", {type: "error"});
+            return;
+        }
+        UserModals.openUserProfileModal({userId});
         return;
     }
 
@@ -71,6 +75,15 @@ interface OffsetRect {
     height?: number;
 }
 
+function animateLeft(original: number, endPoint: number, popout: HTMLElement) {
+    DOM.animate(function (progress) {
+        let value: number;
+        if (endPoint > original) value = original + (progress * (endPoint - original));
+        else value = original - (progress * (original - endPoint));
+        popout.style.left = value + "px";
+    }, 100);
+}
+
 export default class RoleMembers extends Plugin {
     constructor(meta: Meta) {
         super(meta, Config);
@@ -100,12 +113,12 @@ export default class RoleMembers extends Plugin {
             if (props.className.toLowerCase().includes("interactive")) return; // Already patched
             props.className += ` interactive`;
             props.onClick = (e: ReactMouseEvent<HTMLElement>) => {
-                const roles = getRoles({id: SelectedGuildStore!.getGuildId()!});
+                const roles = getRoles({id: SelectedGuildStore.getGuildId()!});
                 const name = props.children[1][0].props.children.slice(1) as string;
                 const filtered = filter(roles!, (r: GuildRole) => r.name === name) as Record<string, GuildRole>;
                 if (!filtered) return;
                 const role = filtered[Object.keys(filtered)[0]];
-                this.showSveltePopout(SelectedGuildStore!.getGuildId()!, role.id, e.currentTarget.getBoundingClientRect());
+                this.showSveltePopout(SelectedGuildStore.getGuildId()!, role.id, e.currentTarget.getBoundingClientRect());
             };
         });
     }
@@ -117,13 +130,15 @@ export default class RoleMembers extends Plugin {
             const roles = getRoles(guild);
             const roleItems = [];
 
+            const members = this.settings.showCounts ? GuildMemberStore.getMembers(guildId) : [];
+
             for (const roleId in roles) {
                 const role = roles[roleId];
                 let label = role.name;
                 if (this.settings.showCounts) {
-                    let members = GuildMemberStore!.getMembers(guildId);
-                    if (guildId != roleId) members = members.filter(m => m.roles.includes(role.id));
-                    label = `${label} (${members.length})`;
+                    let membersInRole = members;
+                    if (guildId != roleId) membersInRole = membersInRole.filter(m => m.roles.includes(role.id));
+                    label = `${label} (${membersInRole.length})`;
                 }
                 const item = ContextMenu.buildItem({
                     id: roleId,
@@ -194,27 +209,17 @@ export default class RoleMembers extends Plugin {
         const maxWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
         const maxHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-        if (offset.right + popout.offsetHeight >= maxWidth) {
+        if (offset.right + popout.offsetWidth >= maxWidth) {
             popout.style.left = Math.round(offset.left - popout.offsetWidth - 20) + "px";
             const original = Math.round(offset.left - popout.offsetWidth - 20);
             const endPoint = Math.round(offset.left - popout.offsetWidth - 10);
-            DOM.animate(function (progress) {
-                let value = 0;
-                if (endPoint > original) value = original + (progress * (endPoint - original));
-                else value = original - (progress * (original - endPoint));
-                popout.style.left = value + "px";
-            }, 100);
+            animateLeft(original, endPoint, popout);
         }
         else {
             popout.style.left = (offset.right + 10) + "px";
             const original = offset.right + 10;
             const endPoint = offset.right;
-            DOM.animate(function (progress) {
-                let value = 0;
-                if (endPoint > original) value = original + (progress * (endPoint - original));
-                else value = original - (progress * (original - endPoint));
-                popout.style.left = value + "px";
-            }, 100);
+            animateLeft(original, endPoint, popout);
         }
 
         if (offset.top + popout.offsetHeight >= maxHeight) popout.style.top = Math.round(maxHeight - popout.offsetHeight) + "px";
