@@ -1,4 +1,4 @@
-import {Manifest} from "@betterdiscord/manifest";
+import type {Manifest} from "@betterdiscord/manifest";
 
 const manifest: Manifest = {
     info: {
@@ -9,28 +9,17 @@ const manifest: Manifest = {
             github_username: "zerebos",
             twitter_username: "IAmZerebos"
         }],
-        version: "0.3.1",
+        version: "0.3.2",
         description: "Allows you to view a user's permissions. Thanks to Noodlebox for the idea!",
         github: "https://github.com/zerebos/BetterDiscordAddons/tree/master/Plugins/PermissionsViewer",
         github_raw: "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/master/Plugins/PermissionsViewer/PermissionsViewer.plugin.js"
     },
     changelog: [
         {
-            title: "What's New?",
-            type: "added",
-            items: [
-                "Popout permissions updated to match Discord's new style.",
-                "Modal permissions updated to match Discord's new style."
-            ]
-        },
-        {
-            title: "Fixes",
+            title: "Fixed Modal",
             type: "fixed",
             items: [
-                "User popouts should close when opening the permissions modal.",
-                "User modals should close when opening the permissions modal.",
-                "The occasional error in console has been fixed.",
-                "Fixed channel overwrite detection.",
+                "Fixed the permissions modal not having a backdrop for some users."
             ]
         }
     ],

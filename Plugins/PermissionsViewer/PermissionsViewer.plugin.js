@@ -1,7 +1,7 @@
 /**
  * @name PermissionsViewer
  * @description Allows you to view a user's permissions. Thanks to Noodlebox for the idea!
- * @version 0.3.1
+ * @version 0.3.2
  * @author Zerebos
  * @authorId 249746236008169473
  * @website https://github.com/zerebos/BetterDiscordAddons/tree/master/Plugins/PermissionsViewer
@@ -51,11 +51,11 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/plugins/PermissionsViewer/index.ts
-var PermissionsViewer_exports = {};
-__export(PermissionsViewer_exports, {
+var index_exports = {};
+__export(index_exports, {
   default: () => PermissionsViewer
 });
-module.exports = __toCommonJS(PermissionsViewer_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/common/plugin.ts
 var Plugin = class {
@@ -183,28 +183,17 @@ var manifest = {
       github_username: "zerebos",
       twitter_username: "IAmZerebos"
     }],
-    version: "0.3.1",
+    version: "0.3.2",
     description: "Allows you to view a user's permissions. Thanks to Noodlebox for the idea!",
     github: "https://github.com/zerebos/BetterDiscordAddons/tree/master/Plugins/PermissionsViewer",
     github_raw: "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/master/Plugins/PermissionsViewer/PermissionsViewer.plugin.js"
   },
   changelog: [
     {
-      title: "What's New?",
-      type: "added",
-      items: [
-        "Popout permissions updated to match Discord's new style.",
-        "Modal permissions updated to match Discord's new style."
-      ]
-    },
-    {
-      title: "Fixes",
+      title: "Fixed Modal",
       type: "fixed",
       items: [
-        "User popouts should close when opening the permissions modal.",
-        "User modals should close when opening the permissions modal.",
-        "The occasional error in console has been fixed.",
-        "Fixed channel overwrite detection."
+        "Fixed the permissions modal not having a backdrop for some users."
       ]
     }
   ],
@@ -333,6 +322,29 @@ var manifest = {
         contextMenus: {
           name: "\u041A\u043D\u043E\u043F\u043A\u0430 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0433\u043E \u043C\u0435\u043D\u044E",
           note: "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A\u043D\u043E\u043F\u043A\u0443 \u0434\u043B\u044F \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u043B\u043D\u043E\u043C\u043E\u0447\u0438\u0439 \u0441 \u043F\u043E\u043C\u043E\u0449\u044C\u044E \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u044B\u0445 \u043C\u0435\u043D\u044E."
+        }
+      }
+    },
+    nl: {
+      contextMenuLabel: "Permissies",
+      popoutLabel: "Permissies",
+      modal: {
+        header: "{{name}}'s Permissies",
+        rolesLabel: "Rollen",
+        permissionsLabel: "Permissies",
+        owner: "@eigenaar"
+      },
+      settings: {
+        popouts: {
+          name: "Toon in Popouts",
+          note: "Toont de totale rechten van een gebruiker in zijn pop-out, vergelijkbaar met rollen."
+        },
+        contextMenus: {
+          name: "Contextmenuknop",
+          note: "Voegt een knop toe om de machtigingsmodaliteit voor het selecteren van contextmenu's te bekijken."
+        },
+        displayMode: {
+          name: "Modal weergavemodus"
         }
       }
     }
@@ -489,7 +501,7 @@ var PermissionsViewer = class extends Plugin {
     const BackdropClasses = Webpack.getByKeys("backdrop");
     this.sectionHTML = formatString(list_default, RoleClasses, UserPopoutClasses);
     this.itemHTML = formatString(item_default, RoleClasses);
-    this.modalHTML = formatString(modal_default, BackdropClasses ?? {}, { root: ModalClasses?.root ?? "root_f9a4c9", small: ModalClasses?.small ?? "small_f9a4c9" });
+    this.modalHTML = formatString(modal_default, BackdropClasses?.backdrop ? { backdrop: BackdropClasses.backdrop } : {}, { root: ModalClasses?.root ?? "root_f9a4c9", small: ModalClasses?.small ?? "small_f9a4c9" });
     if (this.settings.popouts) this.bindPopouts();
     if (this.settings.contextMenus) this.bindContextMenus();
     this.setDisplayMode(this.settings.displayMode);

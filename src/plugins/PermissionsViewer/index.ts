@@ -1,12 +1,12 @@
-import {Component, ReactElement} from "react";
+import type {Component, ReactElement} from "react";
 
 import Plugin from "@common/plugin";
 import formatString from "@common/formatstring";
 
-import {Meta} from "@betterdiscord/meta";
+import type {Meta} from "@betterdiscord/meta";
 
-import {Channel, Guild, GuildMember, GuildRole, PermissionOverwrite, User} from "@discord";
-import {ClassModule, DiscordPermissions as IDiscordPermissions} from "@discord/modules";
+import type {Channel, Guild, GuildMember, GuildRole, PermissionOverwrite, User} from "@discord";
+import type {ClassModule, DiscordPermissions as IDiscordPermissions} from "@discord/modules";
 
 import Config from "./config";
 
@@ -31,17 +31,17 @@ type DisplayMode = "cozy" | "compact";
 const {ContextMenu, DOM, Utils, Webpack, UI, ReactUtils} = BdApi;
 
 const GuildStore = Webpack.getStore<{getGuild(id: string): Guild;}>("GuildStore");
-const SelectedGuildStore = Webpack.getStore<{getGuildId(): string}>("SelectedGuildStore");
-const GuildRoleStore = Webpack.getStore<{getRolesSnapshot(id: string): Record<string, GuildRole>; }>("GuildRoleStore");
+const SelectedGuildStore = Webpack.getStore<{getGuildId(): string;}>("SelectedGuildStore");
+const GuildRoleStore = Webpack.getStore<{getRolesSnapshot(id: string): Record<string, GuildRole>;}>("GuildRoleStore");
 const MemberStore = Webpack.getStore<{getNick(gid: string, uid: string): string; getMembers(id: string): GuildMember[]; getMember(gid: string, uid: string): GuildMember;}>("GuildMemberStore");
-const UserStore = Webpack.getStore<{getUser(id: string): User}>("UserStore");
+const UserStore = Webpack.getStore<{getUser(id: string): User;}>("UserStore");
 const DiscordPermissions = Webpack.getModule<IDiscordPermissions>(m => m.ADD_REACTIONS, {searchExports: true});
-const AvatarDefaults = Webpack.getByKeys<{DEFAULT_AVATARS: string[]}>("DEFAULT_AVATARS") ?? {DEFAULT_AVATARS: ["/assets/a0180771ce23344c2a95.png", "/assets/ca24969f2fd7a9fb03d5.png", "/assets/974be2a933143742e8b1.png", "/assets/999edf6459b7dacdcadf.png", "/assets/887bc8fac6c9878f058a.png", "/assets/1256b1e634d7274dd430.png"]};
-const ElectronModule = BdApi.Webpack.getByKeys<{copy(s: string): void}>("setBadge");
+const AvatarDefaults = Webpack.getByKeys<{DEFAULT_AVATARS: string[];}>("DEFAULT_AVATARS") ?? {DEFAULT_AVATARS: ["/assets/a0180771ce23344c2a95.png", "/assets/ca24969f2fd7a9fb03d5.png", "/assets/974be2a933143742e8b1.png", "/assets/999edf6459b7dacdcadf.png", "/assets/887bc8fac6c9878f058a.png", "/assets/1256b1e634d7274dd430.png"]};
+const ElectronModule = BdApi.Webpack.getByKeys<{copy(s: string): void;}>("setBadge");
 const intlModule = BdApi.Webpack.getByKeys<{intl: {string(hash: string): string;}; t: Record<string, string>;}>("intl");
 
 
-const getRoles = (guild: {roles?: Record<string, GuildRole>; id: string}): Record<string, GuildRole> | undefined => guild?.roles ?? GuildRoleStore?.getRolesSnapshot(guild?.id);
+const getRoles = (guild: {roles?: Record<string, GuildRole>; id: string;}): Record<string, GuildRole> | undefined => guild?.roles ?? GuildRoleStore?.getRolesSnapshot(guild?.id);
 const getHashString = (hash: string) => intlModule?.intl.string(hash);
 const getPermString = (perm: keyof IDiscordPermissions) => intlModule?.intl.string(intlModule.t[PermissionStringMap[perm]]) ?? perm.toString();
 
@@ -143,7 +143,7 @@ export default class PermissionsViewer extends Plugin {
 
         this.sectionHTML = formatString(SectionHTML, RoleClasses, UserPopoutClasses);
         this.itemHTML = formatString(ItemHTML, RoleClasses);
-        this.modalHTML = formatString(ModalHTML, BackdropClasses ?? {}, {root: ModalClasses?.root ?? "root_f9a4c9", small: ModalClasses?.small ?? "small_f9a4c9"});
+        this.modalHTML = formatString(ModalHTML, BackdropClasses?.backdrop ? {backdrop: BackdropClasses.backdrop} : {}, {root: ModalClasses?.root ?? "root_f9a4c9", small: ModalClasses?.small ?? "small_f9a4c9"});
 
         if (this.settings.popouts) this.bindPopouts();
         if (this.settings.contextMenus) this.bindContextMenus();
@@ -211,9 +211,9 @@ export default class PermissionsViewer extends Plugin {
             if (roleList?.parentElement?.className.includes("section")) roleList = roleList.parentElement as HTMLDivElement;
             roleList?.after(permBlock);
 
-            const popoutInstance = Utils.findInTree<Component & {updatePosition(): void; props: {targetRef: {current: HTMLElement | null}}}>(
+            const popoutInstance = Utils.findInTree<Component & {updatePosition(): void; props: {targetRef: {current: HTMLElement | null;};};}>(
                 ReactUtils.getInternalInstance(popout),
-                (m: {updatePosition?: () => void}) => m && m.updatePosition,
+                (m: {updatePosition?: () => void;}) => m && m.updatePosition,
                 {walkable: ["stateNode", "return"]}
             );
             if (!popoutInstance || !popoutInstance.updatePosition) return;
@@ -225,7 +225,7 @@ export default class PermissionsViewer extends Plugin {
         const popout = element.querySelector<HTMLDivElement>(`[class*="userPopout_"], [class*="outer_"]`) ?? element as HTMLDivElement;
 
         if (!popout || !popout.matches(`[class*="userPopout_"], [class*="outer_"]`)) return;
-        const props = Utils.findInTree<{displayProfile: {guildId: string;}; user: User;}>(ReactUtils.getInternalInstance(popout), (m: {user?: User}) => m && m.user, {walkable: ["memoizedProps", "return"]});
+        const props = Utils.findInTree<{displayProfile: {guildId: string;}; user: User;}>(ReactUtils.getInternalInstance(popout), (m: {user?: User;}) => m && m.user, {walkable: ["memoizedProps", "return"]});
         popoutMount(props);
     }
 
@@ -248,7 +248,7 @@ export default class PermissionsViewer extends Plugin {
     }
 
     patchGuildContextMenu() {
-        this.contextMenuPatches.push(ContextMenu.patch("guild-context", (retVal: ReactElement<{children?: ReactElement[]}>, props) => {
+        this.contextMenuPatches.push(ContextMenu.patch("guild-context", (retVal: ReactElement<{children?: ReactElement[];}>, props) => {
             if (!props?.guild) return retVal; // Ignore non-guild items
             const newItem = ContextMenu.buildItem({
                 label: this.strings.contextMenuLabel,
@@ -261,7 +261,7 @@ export default class PermissionsViewer extends Plugin {
     }
 
     patchChannelContextMenu() {
-        this.contextMenuPatches.push(ContextMenu.patch("channel-context", (retVal: ReactElement<{children?: ReactElement[]}>, props) => {
+        this.contextMenuPatches.push(ContextMenu.patch("channel-context", (retVal: ReactElement<{children?: ReactElement[];}>, props) => {
             const newItem = ContextMenu.buildItem({
                 label: this.strings.contextMenuLabel,
                 action: () => {
@@ -274,7 +274,7 @@ export default class PermissionsViewer extends Plugin {
     }
 
     patchUserContextMenu() {
-        this.contextMenuPatches.push(ContextMenu.patch("user-context", (retVal: ReactElement<{children?: ReactElement<{children?: ReactElement[]}>[]}>, props) => {
+        this.contextMenuPatches.push(ContextMenu.patch("user-context", (retVal: ReactElement<{children?: ReactElement<{children?: ReactElement[];}>[];}>, props) => {
             const guild = GuildStore?.getGuild(props.guildId);
             if (!guild) return;
 
@@ -313,7 +313,7 @@ export default class PermissionsViewer extends Plugin {
 
     createModalUser(name: string, user: GuildMember, guild: Guild) {
         const guildRoles = Object.assign({}, getRoles(guild)) as Record<string, Partial<GuildRole>>;
-        const userRoles = user.roles.slice(0).filter(r => typeof(guildRoles[r]) !== "undefined");
+        const userRoles = user.roles.slice(0).filter(r => typeof (guildRoles[r]) !== "undefined");
 
         userRoles.push(guild.id);
         userRoles.sort((a, b) => {return guildRoles[b].position! - guildRoles[a].position!;});
