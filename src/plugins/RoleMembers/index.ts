@@ -28,7 +28,7 @@ const UserModals = BdApi.Webpack.getByKeys<UserModalOpener>("openUserProfileModa
 
 type ClassModule = Record<string, string>;
 
-const LayerClasses = BdApi.Webpack.getByKeys<ClassModule>("layerContainer");
+const LayerClasses = BdApi.Webpack.getByKeys<ClassModule>("layer", "layerContainer");
 
 const getRoles = (guild: {roles?: Record<string, GuildRole>; id: string;}): Record<string, GuildRole> | undefined => guild?.roles ?? GuildRoleStore?.getRolesSnapshot(guild?.id);
 
@@ -206,7 +206,7 @@ export default class RoleMembers extends Plugin {
     showPopout(popout: HTMLElement, offset: OffsetRect) {
         if (this.listener) this.listener(null); // Close any previous popouts
 
-        const layerContainers = document.querySelectorAll(`[class*="-app"] ~ .${LayerClasses?.layerContainer ?? "_59d0d7075b521375-layerContainer"}`);
+        const layerContainers = document.querySelectorAll(`[class*="app"] ~ ${LayerClasses?.layerContainer ? `.${LayerClasses?.layerContainer}` : `[class*="layerContainer"]`}`);
         const firstLayerContainer = layerContainers[0];
         if (!firstLayerContainer) {
             if (this.popoutInstance) {
