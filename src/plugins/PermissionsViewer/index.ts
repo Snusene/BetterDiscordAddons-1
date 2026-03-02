@@ -243,7 +243,6 @@ export default class PermissionsViewer extends Plugin {
             const newItem = ContextMenu.buildItem({
                 label: this.strings.contextMenuLabel,
                 action: () => {
-                    // this.showModal(this.createModalGuild(props.guild.name, props.guild));
                     this.createModalGuild(props.guild.name, props.guild);
                 }
             });
@@ -257,7 +256,6 @@ export default class PermissionsViewer extends Plugin {
                 label: this.strings.contextMenuLabel,
                 action: () => {
                     if (!hasOverwrites(props.channel)) return UI.showToast(`#${props.channel.name} has no permission overrides`, {type: "info"});
-                    // this.showModal(this.createModalChannel(props.channel.name, props.channel, props.guild));
                     this.createModalChannel(props.channel.name, props.channel, props.guild);
                 }
             });
@@ -276,7 +274,6 @@ export default class PermissionsViewer extends Plugin {
                     const user = MemberStore?.getMember(props.guildId, props.user.id);
                     if (!user) return;
                     const name = user.nick ? user.nick : props.user.username;
-                    // this.showModal(this.createModalUser(name, user, guild));
                     this.createModalUser(name, user, guild);
                 }
             });
@@ -304,7 +301,6 @@ export default class PermissionsViewer extends Plugin {
         return this.createModal({title: name, avatarUrl: userInstance?.getAvatarURL(null, 128, true)}, userRoles, guildRoles);
     }
 
-    // https://cdn.discordapp.com/icons/947985618502307840/d021915c6f7e81a81af16cf482dc9676.webp?size=80&quality=lossless
     createModalGuild(name: string, guild: Guild) {
         return this.createModal(
             {

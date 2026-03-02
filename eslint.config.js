@@ -83,7 +83,7 @@ export default [
             "space-before-blocks": "error",
             "space-in-parens": "error",
             "space-infix-ops": "error",
-            "space-unary-ops": ["error", {words: true, nonwords: false, overrides: {"typeof": false}}],
+            "space-unary-ops": ["error", {words: true, nonwords: false}],
             "spaced-comment": ["error", "always", {exceptions: ["-", "*"]}],
             "template-curly-spacing": "error",
             "wrap-iife": ["error", "inside"],
