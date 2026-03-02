@@ -44,6 +44,7 @@ export function getDefinitions(guildIdOrGuild: string | Guild): PermissionCatego
     const guild = typeof guildIdOrGuild === "string" ? BdApi.Webpack.Stores.GuildStore.getGuild(guildIdOrGuild) : guildIdOrGuild;
     if (!guild) throw new Error("Guild not found");
     const guildSpecs = specManager.generateGuildPermissionSpec(guild);
+    // console.log(guildSpecs);
     return guildSpecs.map(category => ({
         name: category.title,
         permissions: category.permissions.map(perm => ({
