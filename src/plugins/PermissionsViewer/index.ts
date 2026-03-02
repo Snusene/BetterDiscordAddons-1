@@ -23,6 +23,9 @@ import ModalButtonUserHTML from "./modalbuttonuser.html";
 import PermAllowedSVG from "./permallowed.svg";
 import PermDeniedSVG from "./permdenied.svg";
 import {rgbToAlpha} from "@common/colors";
+import PermissionModal from "./components/PermissionViewerModal.svelte";
+import {mount, unmount} from "svelte";
+import {getDefinitions} from "./perms";
 
 
 type DisplayMode = "cozy" | "compact";
@@ -50,6 +53,7 @@ const PermissionStringMap: Record<keyof IDiscordPermissions, string> = {
     ADMINISTRATOR: "dwlcc3",
     ATTACH_FILES: "3AS4UF",
     BAN_MEMBERS: "2a50fH",
+    BYPASS_SLOWMODE: "kqcjeV",
     CHANGE_NICKNAME: "ieWVpK",
     CONNECT: "S0W8Z2",
     CREATE_EVENTS: "qyjZub",
@@ -73,6 +77,7 @@ const PermissionStringMap: Record<keyof IDiscordPermissions, string> = {
     MODERATE_MEMBERS: "7DgVBg",
     MOVE_MEMBERS: "YtjJPT",
     MUTE_MEMBERS: "8EI309",
+    PIN_MESSAGES: "Y5BI39",
     PRIORITY_SPEAKER: "BVK71t",
     READ_MESSAGE_HISTORY: "l9ufaW",
     REQUEST_TO_SPEAK: "hLbG5O",
@@ -85,7 +90,7 @@ const PermissionStringMap: Record<keyof IDiscordPermissions, string> = {
     SPEAK: "8w1tIS",
     STREAM: "UPvOiY",
     USE_APPLICATION_COMMANDS: "shbR1d",
-    USE_CLYDE_AI: "8eeEZm",
+    // USE_CLYDE_AI: "8eeEZm",
     USE_EMBEDDED_ACTIVITIES: "rLSGen",
     USE_EXTERNAL_APPS: "TtA5rK",
     USE_EXTERNAL_EMOJIS: "BpBGZW",
@@ -204,7 +209,8 @@ export default class PermissionsViewer extends Plugin {
             permBlock.querySelector<HTMLSpanElement>(".perm-details")?.addEventListener("click", () => {
                 popoutInstance?.props?.targetRef?.current?.click(); // Close the popout
                 document.querySelector<HTMLDivElement>(`[class*="backdrop__"]`)?.click(); // Close the modal
-                this.showModal(this.createModalUser(name, user, guild));
+                // this.showModal(this.createModalUser(name, user, guild));
+                this.createModalUser(name, user, guild);
             });
 
             let roleList = popout.querySelector<HTMLDivElement>(`[class*="root_"]`);
@@ -253,7 +259,8 @@ export default class PermissionsViewer extends Plugin {
             const newItem = ContextMenu.buildItem({
                 label: this.strings.contextMenuLabel,
                 action: () => {
-                    this.showModal(this.createModalGuild(props.guild.name, props.guild));
+                    // this.showModal(this.createModalGuild(props.guild.name, props.guild));
+                    this.createModalGuild(props.guild.name, props.guild);
                 }
             });
             retVal.props.children?.splice(1, 0, newItem);
@@ -266,7 +273,8 @@ export default class PermissionsViewer extends Plugin {
                 label: this.strings.contextMenuLabel,
                 action: () => {
                     if (!hasOverwrites(props.channel)) return UI.showToast(`#${props.channel.name} has no permission overrides`, {type: "info"});
-                    this.showModal(this.createModalChannel(props.channel.name, props.channel, props.guild));
+                    // this.showModal(this.createModalChannel(props.channel.name, props.channel, props.guild));
+                    this.createModalChannel(props.channel.name, props.channel, props.guild);
                 }
             });
             retVal.props.children?.splice(1, 0, newItem);
@@ -284,31 +292,33 @@ export default class PermissionsViewer extends Plugin {
                     const user = MemberStore?.getMember(props.guildId, props.user.id);
                     if (!user) return;
                     const name = user.nick ? user.nick : props.user.username;
-                    this.showModal(this.createModalUser(name, user, guild));
+                    // this.showModal(this.createModalUser(name, user, guild));
+                    this.createModalUser(name, user, guild);
                 }
             });
             retVal?.props?.children?.[0]?.props?.children?.splice(2, 0, newItem);
         }));
     }
 
-    showModal(modal: HTMLDivElement) {
-        const popout = document.querySelector<HTMLDivElement>(`[class*="userPopoutOuter-"]`);
-        if (popout) popout.style.display = "none";
-        const app = document.querySelector(".app-19_DXt");
-        if (app) app.append(modal);
-        else document.querySelector<HTMLDivElement>("#app-mount")?.append(modal);
+    // showModal(modal: HTMLDivElement) {
+    //     return;
+    //     const popout = document.querySelector<HTMLDivElement>(`[class*="userPopoutOuter-"]`);
+    //     if (popout) popout.style.display = "none";
+    //     const app = document.querySelector(".app-19_DXt");
+    //     if (app) app.append(modal);
+    //     else document.querySelector<HTMLDivElement>("#app-mount")?.append(modal);
 
-        const closeModal = (event: KeyboardEvent) => {
-            if (event.key !== "Escape") return;
-            modal.classList.add("closing");
-            setTimeout(() => {modal.remove();}, 300);
-        };
-        document.addEventListener("keydown", closeModal, true);
-        DOM.onRemoved(modal, () => document.removeEventListener("keydown", closeModal, true));
-    }
+    //     const closeModal = (event: KeyboardEvent) => {
+    //         if (event.key !== "Escape") return;
+    //         modal.classList.add("closing");
+    //         setTimeout(() => {modal.remove();}, 300);
+    //     };
+    //     document.addEventListener("keydown", closeModal, true);
+    //     DOM.onRemoved(modal, () => document.removeEventListener("keydown", closeModal, true));
+    // }
 
     createModalChannel(name: string, channel: Channel, guild: Guild) {
-        return this.createModal(`#${name}`, channel.permissionOverwrites, getRoles(guild), true);
+        return this.createModal({title: `#${name}`}, channel.permissionOverwrites, getRoles(guild), true);
     }
 
     createModalUser(name: string, user: GuildMember, guild: Guild) {
@@ -320,76 +330,152 @@ export default class PermissionsViewer extends Plugin {
 
         if (user.userId == guild.ownerId) {
             const ALL_PERMISSIONS = Object.values(DiscordPermissions!).reduce((all, p) => all | p);
-            userRoles.push(user.userId);
-            guildRoles[user.userId] = {name: (this.strings.modal as Record<string, string>).owner ?? "", permissions: ALL_PERMISSIONS};
+            userRoles.push("@owner");
+            guildRoles["@owner"] = {name: (this.strings.modal as Record<string, string>).owner ?? "", permissions: ALL_PERMISSIONS};
         }
-        return this.createModal(name, userRoles, guildRoles);
+        const userInstance = UserStore?.getUser(user.userId);
+        return this.createModal({title: name, avatarUrl: userInstance?.getAvatarURL(null, 128, true)}, userRoles, guildRoles);
     }
 
+    // https://cdn.discordapp.com/icons/947985618502307840/d021915c6f7e81a81af16cf482dc9676.webp?size=80&quality=lossless
     createModalGuild(name: string, guild: Guild) {
-        return this.createModal(name, getRoles(guild)!);
+        return this.createModal(
+            {
+                title: name,
+                avatarUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp?size=128&quality=lossless` : undefined
+            },
+            getRoles(guild)!
+        );
     }
 
-    createModal<T extends boolean = false>(title: string, displayRoles: T extends true ? Record<string, PermissionOverwrite> : Array<string> | Record<string, Partial<GuildRole>>, referenceRoles?: Record<string, Partial<GuildRole>>, isOverride?: T) {
+    createModal<T extends boolean = false>(
+        title: {
+            title: string;
+            subtitle?: string;
+            avatarUrl?: string;
+        },
+        displayRoles: T extends true ? Record<string, PermissionOverwrite> : Array<string> | Record<string, Partial<GuildRole>>,
+        referenceRoles?: Record<string, Partial<GuildRole>>,
+        isOverride?: T
+    ) {
         // @ts-expect-error This whole function needs to be rewritten to get rid of hacks like this
         if (!referenceRoles) referenceRoles = displayRoles;
-        const modal = DOM.parseHTML(formatString(formatString(this.modalHTML, this.strings.modal as Record<string, string>), {name: Utils.escapeHTML(title)})) as HTMLDivElement;
-        const closeModal = () => {
-            modal.classList.add("closing");
-            setTimeout(() => {modal.remove();}, 300);
-        };
-        modal.querySelector(".callout-backdrop")?.addEventListener("click", closeModal);
+        // const modal = DOM.parseHTML(formatString(formatString(this.modalHTML, this.strings.modal as Record<string, string>), {name: Utils.escapeHTML(title.title)})) as HTMLDivElement;
+        // const closeModal = () => {
+        //     modal.classList.add("closing");
+        //     setTimeout(() => {modal.remove();}, 300);
+        // };
+        // modal.querySelector(".callout-backdrop")?.addEventListener("click", closeModal);
 
-        for (const r in displayRoles) {
-            const role = (Array.isArray(displayRoles) ? displayRoles[r as keyof Array<string>] : r) as keyof typeof displayRoles;
-            const user = UserStore?.getUser(role as string) || {getAvatarURL: () => AvatarDefaults.DEFAULT_AVATARS[Math.floor(Math.random() * AvatarDefaults.DEFAULT_AVATARS.length)], username: role as string};
-            const member = MemberStore?.getMember(SelectedGuildStore?.getGuildId() ?? "", role as string) || {colorString: ""};
-            const item = DOM.parseHTML(!isOverride || (displayRoles[role] as PermissionOverwrite).type == 0 ? ModalButtonHTML : formatString(ModalButtonUserHTML, {avatarUrl: user.getAvatarURL(null, 16, true)})) as HTMLDivElement; // getAvatarURL(guildId, size, canAnimate);
-            if (!isOverride || (displayRoles[role] as PermissionOverwrite).type == 0) item.style.color = referenceRoles![role as keyof typeof referenceRoles].colorString as string;
-            else item.style.color = member.colorString;
-            if (isOverride) item.querySelector(".role-name")!.innerHTML = Utils.escapeHTML((displayRoles[role] as PermissionOverwrite).type == 0 ? (referenceRoles![role as keyof typeof referenceRoles] as GuildRole).name : user.username);
-            else item.querySelector(".role-name")!.innerHTML = Utils.escapeHTML((referenceRoles![role as keyof typeof referenceRoles] as GuildRole).name);
-            modal.querySelector(".role-scroller")!.append(item);
-            item.addEventListener("click", () => {
-                modal.querySelectorAll(".role-item.selected").forEach(e => e.classList.remove("selected"));
-                item.classList.add("selected");
-                const allowed = isOverride ? (displayRoles[role] as PermissionOverwrite).allow : referenceRoles![role as keyof typeof referenceRoles].permissions;
-                const denied = isOverride ? (displayRoles[role] as PermissionOverwrite).deny : null;
+        // for (const r in displayRoles) {
+        //     const role = (Array.isArray(displayRoles) ? displayRoles[r as keyof Array<string>] : r) as keyof typeof displayRoles;
+        //     const user = UserStore?.getUser(role as string) || {getAvatarURL: () => AvatarDefaults.DEFAULT_AVATARS[Math.floor(Math.random() * AvatarDefaults.DEFAULT_AVATARS.length)], username: role as string};
+        //     const member = MemberStore?.getMember(SelectedGuildStore?.getGuildId() ?? "", role as string) || {colorString: ""};
+        //     const item = DOM.parseHTML(!isOverride || (displayRoles[role] as PermissionOverwrite).type == 0 ? ModalButtonHTML : formatString(ModalButtonUserHTML, {avatarUrl: user.getAvatarURL(null, 16, true)})) as HTMLDivElement; // getAvatarURL(guildId, size, canAnimate);
+        //     if (!isOverride || (displayRoles[role] as PermissionOverwrite).type == 0) item.style.color = referenceRoles![role as keyof typeof referenceRoles].colorString as string;
+        //     else item.style.color = member.colorString;
+        //     if (isOverride) item.querySelector(".role-name")!.innerHTML = Utils.escapeHTML((displayRoles[role] as PermissionOverwrite).type == 0 ? (referenceRoles![role as keyof typeof referenceRoles] as GuildRole).name : user.username);
+        //     else item.querySelector(".role-name")!.innerHTML = Utils.escapeHTML((referenceRoles![role as keyof typeof referenceRoles] as GuildRole).name);
+        //     modal.querySelector(".role-scroller")!.append(item);
+        //     item.addEventListener("click", () => {
+        //         modal.querySelectorAll(".role-item.selected").forEach(e => e.classList.remove("selected"));
+        //         item.classList.add("selected");
+        //         const allowed = isOverride ? (displayRoles[role] as PermissionOverwrite).allow : referenceRoles![role as keyof typeof referenceRoles].permissions;
+        //         const denied = isOverride ? (displayRoles[role] as PermissionOverwrite).deny : null;
 
-                const permList = modal.querySelector<HTMLDivElement>(".perm-scroller")!;
-                permList.innerHTML = "";
-                for (const perm in DiscordPermissions) {
-                    const element = DOM.parseHTML(ModalItemHTML) as HTMLDivElement;
-                    const permAllowed = (allowed! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions];
-                    const permDenied = isOverride ? (denied! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions] : !permAllowed;
-                    if (!permAllowed && !permDenied) continue;
-                    if (permAllowed) {
-                        element.classList.add("allowed");
-                        element.prepend(DOM.parseHTML(PermAllowedSVG) as HTMLDivElement);
+        //         const permList = modal.querySelector<HTMLDivElement>(".perm-scroller")!;
+        //         permList.innerHTML = "";
+        //         for (const perm in DiscordPermissions) {
+        //             const element = DOM.parseHTML(ModalItemHTML) as HTMLDivElement;
+        //             const permAllowed = (allowed! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions];
+        //             const permDenied = isOverride ? (denied! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions] : !permAllowed;
+        //             if (!permAllowed && !permDenied) continue;
+        //             if (permAllowed) {
+        //                 element.classList.add("allowed");
+        //                 element.prepend(DOM.parseHTML(PermAllowedSVG) as HTMLDivElement);
+        //             }
+        //             if (permDenied) {
+        //                 element.classList.add("denied");
+        //                 element.prepend(DOM.parseHTML(PermDeniedSVG) as HTMLDivElement);
+        //             }
+        //             element.querySelector(".perm-name")!.textContent = getPermString(perm as keyof IDiscordPermissions) || perm.split("_").map(n => n[0].toUpperCase() + n.slice(1).toLowerCase()).join(" ");
+        //             permList.append(element);
+        //         }
+        //     });
+        //     item.addEventListener("contextmenu", (e) => {
+        //         ContextMenu.open(e, ContextMenu.buildMenu([
+        //             {
+        //                 label: getHashString("rCaznZ") ?? "Copy ID",
+        //                 action: () => {
+        //                     ElectronModule?.copy(role as string);
+        //                 }
+        //             }
+        //         ]));
+        //     });
+        // }
+
+        // modal.querySelector<HTMLDivElement>(".role-item")?.click();
+
+        const svelteMountContainer = document.createElement("div");
+        svelteMountContainer.style.display = "contents";
+        // svelteMountContainer.style.position = "fixed";
+        // svelteMountContainer.style.pointerEvents = "all";
+        // svelteMountContainer.style.zIndex = "1001";
+        // svelteMountContainer.style.width = "100%";
+        // svelteMountContainer.style.height = "100%";
+        // console.log(getDefinitions(SelectedGuildStore?.getGuildId() ?? ""));
+        const dRoles = Object.keys(displayRoles);
+        // console.log(displayRoles);
+        const temp = mount(PermissionModal, {
+            target: svelteMountContainer,
+            props: {
+                title: title.title,
+                avatarUrl: title.avatarUrl,
+                subtitle: title.subtitle ?? "View effective permissions and role breakdowns",
+                tabs: dRoles?.map(d => {
+                    const role = (Array.isArray(displayRoles) ? displayRoles[d as keyof Array<string>] : d) as keyof typeof displayRoles;
+                    // console.log(d, role, referenceRoles);
+                    // const allPerms = Object.keys(DiscordPermissions).map(p => p.toLowerCase());
+                    const perms = {};
+                    const allowed = isOverride ? (displayRoles[role] as PermissionOverwrite).allow : referenceRoles![role as keyof typeof referenceRoles].permissions;
+                    const denied = isOverride ? (displayRoles[role] as PermissionOverwrite).deny : null;
+                    for (const perm in DiscordPermissions) {
+                        // console.log(perm, DiscordPermissions[perm as keyof typeof DiscordPermissions], allowed, denied);
+                        const permAllowed = (allowed! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions];
+                        const permDenied = isOverride ? (denied! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions] : !permAllowed;
+                        // const isAllowed = (isOverride ? (displayRoles[d as keyof typeof displayRoles] as PermissionOverwrite).allow : role.permissions) & DiscordPermissions[perm as keyof typeof DiscordPermissions] ? true : false;
+                        // const isDenied = isOverride ? (displayRoles[d as keyof typeof displayRoles] as PermissionOverwrite).deny & DiscordPermissions[perm as keyof typeof DiscordPermissions] ? true : false : !isAllowed;
+                        perms[perm] = permAllowed ? "allowed" : permDenied ? "denied" : "neutral";
                     }
-                    if (permDenied) {
-                        element.classList.add("denied");
-                        element.prepend(DOM.parseHTML(PermDeniedSVG) as HTMLDivElement);
-                    }
-                    element.querySelector(".perm-name")!.textContent = getPermString(perm as keyof IDiscordPermissions) || perm.split("_").map(n => n[0].toUpperCase() + n.slice(1).toLowerCase()).join(" ");
-                    permList.append(element);
-                }
-            });
-            item.addEventListener("contextmenu", (e) => {
-                ContextMenu.open(e, ContextMenu.buildMenu([
-                    {
-                        label: getHashString("rCaznZ") ?? "Copy ID",
-                        action: () => {
-                            ElectronModule?.copy(role as string);
-                        }
-                    }
-                ]));
-            });
-        }
 
-        modal.querySelector<HTMLDivElement>(".role-item")?.click();
+                    // console.log({
+                    //     displayRoles,
+                    //     d,
+                    //     role,
+                    //     referenceRoles,
+                    //     roleData: referenceRoles![role as keyof typeof referenceRoles],
+                    // });
 
-        return modal;
+
+                    const user = UserStore?.getUser(role as string) || {getAvatarURL: () => AvatarDefaults.DEFAULT_AVATARS[Math.floor(Math.random() * AvatarDefaults.DEFAULT_AVATARS.length)], username: role as string, id: undefined};
+                    return {
+                        id: role as string,
+                        name: user?.id ? user.username : referenceRoles![role as keyof typeof referenceRoles].name,
+                        color: user?.id ? undefined : referenceRoles![role as keyof typeof referenceRoles].colorStrings?.primaryColor,
+                        permissions: perms,
+                        position: user?.id ? undefined : referenceRoles![role as keyof typeof referenceRoles].position || undefined,
+                        iconUrl: user?.id ? undefined : referenceRoles![role as keyof typeof referenceRoles].icon ? `https://cdn.discordapp.com/role-icons/${referenceRoles![role as keyof typeof referenceRoles].id}/${referenceRoles![role as keyof typeof referenceRoles].icon}.webp` : undefined,
+                        avatarUrl: user?.id ? user.getAvatarURL(null, 128, true) : undefined,
+                    };
+                }),
+                onClose: () => {svelteMountContainer.remove();},
+                categories: getDefinitions(SelectedGuildStore?.getGuildId() ?? "")
+            }
+        });
+        document.querySelector<HTMLDivElement>("#app-mount")?.append(svelteMountContainer);
+        DOM.onRemoved(svelteMountContainer, () => unmount(temp));
+
+        // return modal;
     }
 
     getSettingsPanel() {
@@ -400,7 +486,7 @@ export default class PermissionsViewer extends Plugin {
             }
             if (id == "contextMenus") {
                 if (checked) this.bindContextMenus();
-                this.unbindContextMenus();
+                else this.unbindContextMenus();
             }
             if (id == "displayMode") this.setDisplayMode(checked as DisplayMode);
         });

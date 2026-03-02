@@ -30,6 +30,10 @@ export interface GuildRoleStore extends FluxStore {
     getRolesSnapshot(guildId: string): Record<string, GuildRole>;
 }
 
+export interface LocaleStore extends FluxStore {
+    locale: string;
+}
+
 export interface Stores {
     UserStore: UserStore;
     SelectedGuildStore: SelectedGuildStore;
@@ -37,4 +41,5 @@ export interface Stores {
     ChannelStore: ChannelStore;
     GuildMemberStore: GuildMemberStore;
     GuildRoleStore: GuildRoleStore;
+    LocaleStore: LocaleStore;
 }
