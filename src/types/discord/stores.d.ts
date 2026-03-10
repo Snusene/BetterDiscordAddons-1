@@ -16,6 +16,10 @@ export interface GuildStore extends FluxStore {
     getGuild(id: string): Guild | undefined;
 }
 
+export interface SortedGuildStore extends FluxStore {
+    getFlattenedGuildIds(): string[];
+}
+
 export interface ChannelStore extends FluxStore {
     getChannel(id: string): unknown;
 }
@@ -38,6 +42,7 @@ export interface Stores {
     UserStore: UserStore;
     SelectedGuildStore: SelectedGuildStore;
     GuildStore: GuildStore;
+    SortedGuildStore: SortedGuildStore;
     ChannelStore: ChannelStore;
     GuildMemberStore: GuildMemberStore;
     GuildRoleStore: GuildRoleStore;

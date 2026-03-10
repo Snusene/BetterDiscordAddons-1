@@ -35,6 +35,12 @@ const manifest: Manifest = {
             id: "popouts",
             name: "Popouts",
             value: true
+        },
+        {
+            type: "switch",
+            id: "showNeutral",
+            name: "Show Neutral Permissions",
+            value: false
         }
     ],
     strings: {
@@ -115,6 +121,10 @@ const manifest: Manifest = {
                 contextMenus: {
                     name: "Context Menu Button",
                     note: "Adds a button to view the permissions modal to select context menus."
+                },
+                showNeutral: {
+                    name: "Show Neutral Permissions",
+                    note: "Whether to show permissions that are neither allowed nor denied."
                 }
             }
         },

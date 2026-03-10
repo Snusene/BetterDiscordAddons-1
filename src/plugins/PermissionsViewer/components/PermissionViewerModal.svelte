@@ -16,6 +16,8 @@
         onClose: () => void;
         categories: PermissionCategoryDefinition[];
         tabs: PermissionableEntity[];
+        showNeutral?: boolean;
+        onToggleShowNeutral?: (value: boolean) => void;
     }
 
     const {
@@ -24,7 +26,9 @@
         avatarUrl,
         onClose,
         categories,
-        tabs
+        tabs,
+        showNeutral = true,
+        onToggleShowNeutral
     }: Props = $props();
 
     let roleSearch = $state("");
@@ -32,9 +36,11 @@
     let activeTabId = $state("");
 
     const groupedSections = $derived.by((): PermissionableEntitySection[] => {
-        const specialViews = tabs.filter((entity) => !entity.avatarUrl && entity.position == null && !entity.iconUrl);
+        //  && !entity.iconUrl
+        const specialViews = tabs.filter((entity) => !entity.avatarUrl && entity.position == null);
         const serverRoles = tabs
-            .filter((entity) => !entity.avatarUrl && (entity.position != null || entity.iconUrl))
+        //  || entity.iconUrl
+            .filter((entity) => !entity.avatarUrl && (entity.position != null))
             .slice()
             .sort((a, b) => (b.position ?? -1) - (a.position ?? -1));
         const users = tabs.filter((entity) => Boolean(entity.avatarUrl));
@@ -98,7 +104,7 @@
 
     function selectTab(tabId: string): void {
         activeTabId = tabId;
-        permissionSearch = "";
+        // permissionSearch = "";
     }
 </script>
 
@@ -127,6 +133,8 @@
             {categories}
             {activeEntity}
             {permissionSearch}
+            {showNeutral}
+            {onToggleShowNeutral}
             onPermissionSearch={(value: string) => {
                 permissionSearch = value;
             }}

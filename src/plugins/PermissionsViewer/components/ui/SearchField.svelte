@@ -35,6 +35,7 @@
 <style>
     .ui-search-field {
         position: relative;
+        flex: 1;
     }
 
     .ui-search-field input {

@@ -17,7 +17,8 @@ import SectionHTML from "./list.html";
 import {rgbToAlpha} from "@common/colors";
 import PermissionModal from "./components/PermissionViewerModal.svelte";
 import {mount, unmount} from "svelte";
-import {getDefinitions} from "./perms";
+import {getDefinitions, getPermissionableEntities} from "./perms";
+import type {PermissionableEntity} from "./types";
 
 
 const {ContextMenu, DOM, Utils, Webpack, UI, ReactUtils} = BdApi;
@@ -28,7 +29,6 @@ const GuildRoleStore = Webpack.getStore<{getRolesSnapshot(id: string): Record<st
 const MemberStore = Webpack.getStore<{getNick(gid: string, uid: string): string; getMembers(id: string): GuildMember[]; getMember(gid: string, uid: string): GuildMember;}>("GuildMemberStore");
 const UserStore = Webpack.getStore<{getUser(id: string): User;}>("UserStore");
 const DiscordPermissions = Webpack.getModule<IDiscordPermissions>(m => m.ADD_REACTIONS, {searchExports: true});
-const AvatarDefaults = Webpack.getByKeys<{DEFAULT_AVATARS: string[];}>("DEFAULT_AVATARS") ?? {DEFAULT_AVATARS: ["/assets/a0180771ce23344c2a95.png", "/assets/ca24969f2fd7a9fb03d5.png", "/assets/974be2a933143742e8b1.png", "/assets/999edf6459b7dacdcadf.png", "/assets/887bc8fac6c9878f058a.png", "/assets/1256b1e634d7274dd430.png"]};
 const intlModule = BdApi.Webpack.getByKeys<{intl: {string(hash: string): string;}; t: Record<string, string>;}>("intl");
 
 
@@ -273,7 +273,7 @@ export default class PermissionsViewer extends Plugin {
                 action: () => {
                     const user = MemberStore?.getMember(props.guildId, props.user.id);
                     if (!user) return;
-                    const name = user.nick ? user.nick : props.user.username;
+                    const name = user.nick ? user.nick : props.user.globalName ?? props.user.username;
                     this.createModalUser(name, user, guild);
                 }
             });
@@ -282,102 +282,52 @@ export default class PermissionsViewer extends Plugin {
     }
 
     createModalChannel(name: string, channel: Channel, guild: Guild) {
-        return this.createModal({title: `#${name}`}, channel.permissionOverwrites, getRoles(guild), true);
+        return this.showModal({title: `#${name}`}, getPermissionableEntities(guild, channel));
     }
 
     createModalUser(name: string, user: GuildMember, guild: Guild) {
-        const guildRoles = Object.assign({}, getRoles(guild)) as Record<string, Partial<GuildRole>>;
-        const userRoles = user.roles.slice(0).filter(r => typeof (guildRoles[r]) !== "undefined");
-
-        userRoles.push(guild.id);
-        userRoles.sort((a, b) => {return guildRoles[b].position! - guildRoles[a].position!;});
-
-        if (user.userId == guild.ownerId) {
-            const ALL_PERMISSIONS = Object.values(DiscordPermissions!).reduce((all, p) => all | p);
-            userRoles.push("@owner");
-            guildRoles["@owner"] = {name: (this.strings.modal as Record<string, string>).owner ?? "", permissions: ALL_PERMISSIONS};
-        }
         const userInstance = UserStore?.getUser(user.userId);
-        return this.createModal({title: name, avatarUrl: userInstance?.getAvatarURL(null, 128, true)}, userRoles, guildRoles);
+        return this.showModal({
+            title: name,
+            avatarUrl: userInstance?.getAvatarURL(null, 128, true)
+        }, getPermissionableEntities(guild, user));
     }
 
     createModalGuild(name: string, guild: Guild) {
-        return this.createModal(
+        return this.showModal(
             {
                 title: name,
                 avatarUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp?size=128&quality=lossless` : undefined
             },
-            getRoles(guild)!
+            getPermissionableEntities(guild, guild)
         );
     }
 
-    createModal<T extends boolean = false>(
+    showModal(
         title: {
             title: string;
             subtitle?: string;
             avatarUrl?: string;
         },
-        displayRoles: T extends true ? Record<string, PermissionOverwrite> : Array<string> | Record<string, Partial<GuildRole>>,
-        referenceRoles?: Record<string, Partial<GuildRole>>,
-        isOverride?: T
+        entries: PermissionableEntity[]
     ) {
-        // @ts-expect-error This whole function needs to be rewritten to get rid of hacks like this
-        if (!referenceRoles) referenceRoles = displayRoles;
-
         const svelteMountContainer = document.createElement("div");
         svelteMountContainer.style.display = "contents";
-        // svelteMountContainer.style.position = "fixed";
-        // svelteMountContainer.style.pointerEvents = "all";
-        // svelteMountContainer.style.zIndex = "1001";
-        // svelteMountContainer.style.width = "100%";
-        // svelteMountContainer.style.height = "100%";
-        // console.log(getDefinitions(SelectedGuildStore?.getGuildId() ?? ""));
-        const dRoles = Object.keys(displayRoles);
-        // console.log(displayRoles);
+
         const temp = mount(PermissionModal, {
             target: svelteMountContainer,
             props: {
                 title: title.title,
                 avatarUrl: title.avatarUrl,
                 subtitle: title.subtitle ?? "View effective permissions and role breakdowns",
-                tabs: dRoles?.map(d => {
-                    const role = (Array.isArray(displayRoles) ? displayRoles[d as keyof Array<string>] : d) as keyof typeof displayRoles;
-                    // console.log(d, role, referenceRoles);
-                    // const allPerms = Object.keys(DiscordPermissions).map(p => p.toLowerCase());
-                    const perms: Record<string, "allowed" | "denied" | "neutral"> = {};
-                    const allowed = isOverride ? (displayRoles[role] as PermissionOverwrite).allow : referenceRoles![role as keyof typeof referenceRoles].permissions;
-                    const denied = isOverride ? (displayRoles[role] as PermissionOverwrite).deny : null;
-                    for (const perm in DiscordPermissions) {
-                        // console.log(perm, DiscordPermissions[perm as keyof typeof DiscordPermissions], allowed, denied);
-                        const permAllowed = (allowed! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions];
-                        const permDenied = isOverride ? (denied! & DiscordPermissions[perm as keyof typeof DiscordPermissions]!) == DiscordPermissions[perm as keyof typeof DiscordPermissions] : !permAllowed;
-                        // const isAllowed = (isOverride ? (displayRoles[d as keyof typeof displayRoles] as PermissionOverwrite).allow : role.permissions) & DiscordPermissions[perm as keyof typeof DiscordPermissions] ? true : false;
-                        // const isDenied = isOverride ? (displayRoles[d as keyof typeof displayRoles] as PermissionOverwrite).deny & DiscordPermissions[perm as keyof typeof DiscordPermissions] ? true : false : !isAllowed;
-                        perms[perm] = permAllowed ? "allowed" : permDenied ? "denied" : "neutral";
-                    }
-
-                    // console.log({
-                    //     displayRoles,
-                    //     d,
-                    //     role,
-                    //     referenceRoles,
-                    //     roleData: referenceRoles![role as keyof typeof referenceRoles],
-                    // });
-
-
-                    const user = UserStore?.getUser(role as string) || {getAvatarURL: () => AvatarDefaults.DEFAULT_AVATARS[Math.floor(Math.random() * AvatarDefaults.DEFAULT_AVATARS.length)], username: role as string, id: undefined};
-                    return {
-                        id: role as string,
-                        name: user?.id ? user.username : referenceRoles![role as keyof typeof referenceRoles].name!,
-                        color: user?.id ? undefined : referenceRoles![role as keyof typeof referenceRoles].colorStrings?.primaryColor,
-                        permissions: perms,
-                        position: user?.id ? undefined : referenceRoles![role as keyof typeof referenceRoles].position || undefined,
-                        iconUrl: user?.id ? undefined : referenceRoles![role as keyof typeof referenceRoles].icon ? `https://cdn.discordapp.com/role-icons/${referenceRoles![role as keyof typeof referenceRoles].id}/${referenceRoles![role as keyof typeof referenceRoles].icon}.webp` : undefined,
-                        avatarUrl: user?.id ? user.getAvatarURL(null, 128, true) : undefined,
-                    };
-                }),
+                tabs: entries,
                 onClose: () => {svelteMountContainer.remove();},
-                categories: getDefinitions(SelectedGuildStore?.getGuildId() ?? "")
+                categories: getDefinitions(SelectedGuildStore?.getGuildId() ?? ""),
+                showNeutral: this.settings.showNeutral as boolean,
+                onToggleShowNeutral: (value: boolean) => {
+                    this.settings.showNeutral = value;
+                    this.saveSettings();
+                }
             }
         });
         document.querySelector<HTMLDivElement>("#app-mount")?.append(svelteMountContainer);

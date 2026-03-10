@@ -24,14 +24,20 @@
         activeEntity?: PermissionableEntity;
         permissionSearch: string;
         onPermissionSearch: (value: string) => void;
+        showNeutral?: boolean;
+        onToggleShowNeutral?: (value: boolean) => void;
     }
 
     const {
         categories,
         activeEntity,
         permissionSearch,
-        onPermissionSearch
+        onPermissionSearch,
+        showNeutral = true,
+        onToggleShowNeutral
     }: Props = $props();
+
+    let shouldShowNeutral = $derived(showNeutral);
 
     const visibleCategories = $derived.by((): VisibleCategory[] => {
         const search = permissionSearch.trim().toLowerCase();
@@ -41,6 +47,10 @@
             .map((category) => {
                 const categoryPermissions = category.permissions
                     .filter((permission) => {
+                        const status = permissions[permission.id] ?? "neutral";
+                        if (!shouldShowNeutral && status === "neutral") {
+                            return false;
+                        }
                         if (!search) {
                             return true;
                         }
@@ -73,6 +83,11 @@
 
         return "Neutral";
     }
+
+    function toggleShowNeutral() {
+        shouldShowNeutral = !shouldShowNeutral;
+        onToggleShowNeutral?.(shouldShowNeutral);
+    }
 </script>
 
 <div class="main-content">
@@ -84,6 +99,18 @@
             withSearchIcon={true}
             onInput={onPermissionSearch}
         />
+        <button
+            type="button"
+            class="toggle-neutral"
+            title={shouldShowNeutral ? "Hide neutral permissions" : "Show neutral permissions"}
+            onclick={toggleShowNeutral}
+        >
+            {#if shouldShowNeutral}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+            {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+            {/if}
+        </button>
     </div>
 
     <div class="main-body">
@@ -129,9 +156,24 @@
     }
 
     .content-search {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         padding: 12px 20px;
         background: var(--pv-bg-panel);
         border-bottom: 1px solid var(--pv-border);
+    }
+
+    .toggle-neutral {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 8px;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--pv-text-muted);
+        cursor: pointer;
     }
 
     .main-body {
