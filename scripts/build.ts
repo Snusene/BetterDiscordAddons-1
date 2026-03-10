@@ -114,8 +114,9 @@ async function buildPlugin() {
             esbuildSvelte({
                 preprocess: sveltePreprocess(),
                 compilerOptions: {
+                    runes: true,
                     css: "injected",
-                    cssHash: ({hash, css}) => `${pluginName}-${hash(css)}`
+                    cssHash: ({hash, css}) => `${pluginName}-${hash(css)}`,
                 }
             })
         ],

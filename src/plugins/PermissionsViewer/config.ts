@@ -37,14 +37,10 @@ const manifest: Manifest = {
             value: true
         },
         {
-            type: "radio",
-            id: "displayMode",
-            name: "Modal Display Mode",
-            value: "compact",
-            options: [
-                {name: "Cozy", value: "cozy"},
-                {name: "Compact", value: "compact"}
-            ]
+            type: "switch",
+            id: "showNeutral",
+            name: "Show Neutral Permissions",
+            value: false
         }
     ],
     strings: {
@@ -126,8 +122,9 @@ const manifest: Manifest = {
                     name: "Context Menu Button",
                     note: "Adds a button to view the permissions modal to select context menus."
                 },
-                displayMode: {
-                    name: "Modal Display Mode"
+                showNeutral: {
+                    name: "Show Neutral Permissions",
+                    note: "Whether to show permissions that are neither allowed nor denied."
                 }
             }
         },
@@ -168,9 +165,6 @@ const manifest: Manifest = {
                 contextMenus: {
                     name: "Contextmenuknop",
                     note: "Voegt een knop toe om de machtigingsmodaliteit voor het selecteren van contextmenu's te bekijken."
-                },
-                displayMode: {
-                    name: "Modal weergavemodus"
                 }
             }
         }
